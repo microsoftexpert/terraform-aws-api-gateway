@@ -51,7 +51,7 @@ API endpoint configuration.
  for a VPC-endpoint-only API (requires vpc_endpoint_ids).
  Only a single value is supported by the provider.
  - vpc_endpoint_ids: VPC endpoint IDs for a PRIVATE API. Wire from
- tf-mod-aws-vpc-endpoint (service com.amazonaws.<region>.execute-api).
+ terraform-aws-vpc-endpoint (service com.amazonaws.<region>.execute-api).
  - ip_address_type: "ipv4" (default) or "dualstack". "PRIVATE" APIs only
  support "dualstack".
 EOT
@@ -206,10 +206,10 @@ aws_api_gateway_authorizer. Referenced by methods[*].authorizer_key.
  - authorizer_uri: Lambda invoke ARN in the form
  arn:aws:apigateway:{region}:lambda:path/....
  Required for TOKEN/REQUEST. Wire from
- tf-mod-aws-lambda (invoke_arn output).
+ terraform-aws-lambda (invoke_arn output).
  - authorizer_credentials: IAM role ARN API Gateway assumes to
  invoke the authorizer Lambda. Wire from
- tf-mod-aws-iam-role.
+ terraform-aws-iam-role.
  - identity_source: where the identity is read from.
  Default "method.request.header.Authorization".
  - authorizer_result_ttl_in_seconds: cache TTL for authorizer results (0-3600).
@@ -217,7 +217,7 @@ aws_api_gateway_authorizer. Referenced by methods[*].authorizer_key.
  - identity_validation_expression: regex validated against the TOKEN value.
  - provider_arns: Cognito user pool ARNs. Required for
  COGNITO_USER_POOLS. Wire from
- tf-mod-aws-cognito.
+ terraform-aws-cognito.
 EOT
  type = map(object({
  name = string
@@ -340,7 +340,7 @@ aws_api_gateway_integration -- exactly one per method.
  HTTP/HTTP_PROXY (Lambda invocations must use POST).
  - uri: backend URI. Required for AWS/AWS_PROXY/HTTP/
  HTTP_PROXY. Lambda invoke ARN
- (tf-mod-aws-lambda), HTTP(S) URL, or
+ (terraform-aws-lambda), HTTP(S) URL, or
  arn:aws:apigateway:{region}:{service}:{path|action}/...
  for AWS-service integrations.
  - integration_target: ALB/NLB ARN target for a VPC Link V2 private
@@ -348,7 +348,7 @@ aws_api_gateway_integration -- exactly one per method.
  - credentials: IAM role ARN API Gateway assumes for an AWS
  integration, or "arn:aws:iam::*:user/*" to pass
  through the caller's identity. Wire from
- tf-mod-aws-iam-role.
+ terraform-aws-iam-role.
  - connection_type: "INTERNET" (default) or "VPC_LINK" for a private
  integration through vpc_links.
  - vpc_link_key: key of a vpc_links entry (required when
@@ -522,7 +522,7 @@ surfaced in the stage_arns / stage_invoke_urls outputs.
  - access_log_destination_arn: CloudWatch Logs log group ARN (or Kinesis
  Firehose delivery stream beginning with
  "amazon-apigateway-") to receive access
- logs. Wire from tf-mod-aws-cloudwatch-log-group.
+ logs. Wire from terraform-aws-cloudwatch-log-group.
  Null (default) disables access logging --
  supply this for any production stage.
  - access_log_format: required alongside access_log_destination_arn;
@@ -652,14 +652,14 @@ domain_name_access_associations (domain_name_key).
  module's own Region).
  - certificate_arn: ACM cert ARN for an EDGE domain.
  MUST be requested in us-east-1
- (wire from a tf-mod-aws-acm
+ (wire from a terraform-aws-acm
  call using providers = { aws =
  aws.us_east_1 }). Conflicts
  with regional_certificate_arn.
  - regional_certificate_arn: ACM cert ARN for a REGIONAL/
  PRIVATE domain, in the SAME
  Region as this module. Wire
- from a regional tf-mod-aws-acm
+ from a regional terraform-aws-acm
  call.
  - security_policy: TLS security policy, e.g.
  "TLS_1_2". Must be set for
@@ -849,7 +849,7 @@ Network Load Balancer. FORCE-NEW: target_arns.
  - description: optional description.
  - target_arns: list of Network Load Balancer ARNs in the target VPC. AWS
  currently supports exactly one target. Wire from
- tf-mod-aws-lb (arn output, load_balancer_type = "network").
+ terraform-aws-lb (arn output, load_balancer_type = "network").
 EOT
  type = map(object({
  name = string
@@ -931,7 +931,7 @@ variable "account_cloudwatch_role_arn" {
  description = <<EOT
 IAM role ARN API Gateway assumes to write CloudWatch Logs/metrics at the
 account level. Required when manage_account_settings is true. Wire from
-tf-mod-aws-iam-role (a role trusting apigateway.amazonaws.com with
+terraform-aws-iam-role (a role trusting apigateway.amazonaws.com with
 CloudWatch Logs write permissions).
 EOT
  type = string

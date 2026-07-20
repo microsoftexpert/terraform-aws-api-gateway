@@ -1,8 +1,8 @@
-# tf-mod-aws-api-gateway — SCOPE
+# terraform-aws-api-gateway — SCOPE
 
 Composite module for an Amazon API Gateway **V1 REST API** (the original
 resource/method/integration model, as distinct from V2 HTTP/WebSocket APIs in
-the sibling `tf-mod-aws-api-gateway-v2`). It owns the REST API, its resource
+the sibling `terraform-aws-api-gateway-v2`). It owns the REST API, its resource
 tree, methods, integrations, authorizers, models, deployment, stages, custom
 domain names, usage plans/API keys, VPC Links, gateway responses, client
 certificates, and documentation artifacts — so a single module call produces a
@@ -46,7 +46,7 @@ two conditional singletons rendered via a 0/1-entry `for_each` map (never
 - `aws_api_gateway_account` — account/Region-wide CloudWatch role setting, conditional singleton (`var.manage_account_settings`)
 
 This is the largest resource-block count in the Casey's AWS library (25, versus
-`tf-mod-aws-vpc`'s previous high of 21) — still comfortably under the
+`terraform-aws-vpc`'s previous high of 21) — still comfortably under the
 35-resource-type ceiling in `resource_block_module_matrix.md`.
 
 ## Out-of-scope resources (consumed by reference, or deliberately excluded)
@@ -62,32 +62,32 @@ This is the largest resource-block count in the Casey's AWS library (25, versus
   A caller who wants an OpenAPI-driven REST API should compose
   `aws_api_gateway_rest_api_put` directly against this module's `id` output,
   in a separate, non-graph-based module call — never both in the same call.
-- Lambda function — `uri` / `authorizer_uri` (invoke ARN) from `tf-mod-aws-lambda`
-- ACM certificate(s) — `certificate_arn` / `regional_certificate_arn` (from `tf-mod-aws-acm`)
-- VPC link target (NLB) — `vpc_links[*].target_arns` (from `tf-mod-aws-lb`, `load_balancer_type = "network"`)
-- Cognito user pool — `authorizers[*].provider_arns` (from `tf-mod-aws-cognito`) for `COGNITO_USER_POOLS` authorizers
-- WAFv2 web ACL — associated to a stage by ARN, managed in `tf-mod-aws-wafv2` (this module only surfaces `stage_web_acl_arns` for drift visibility)
-- VPC endpoint(s) — `endpoint_configuration.vpc_endpoint_ids` / `domain_name_access_associations[*].access_association_source` (from `tf-mod-aws-vpc-endpoint`)
-- CloudWatch Logs log group — `stages[*].access_log_destination_arn` (from `tf-mod-aws-cloudwatch-log-group`)
-- IAM role(s) — `authorizers[*].authorizer_credentials`, `integrations[*].credentials`, `account_cloudwatch_role_arn` (from `tf-mod-aws-iam-role`)
-- Route 53 records for a custom domain name — created in `tf-mod-aws-route53-zone` against this module's `domain_name_regional_domain_names` / `domain_name_cloudfront_domain_names` outputs
+- Lambda function — `uri` / `authorizer_uri` (invoke ARN) from `terraform-aws-lambda`
+- ACM certificate(s) — `certificate_arn` / `regional_certificate_arn` (from `terraform-aws-acm`)
+- VPC link target (NLB) — `vpc_links[*].target_arns` (from `terraform-aws-lb`, `load_balancer_type = "network"`)
+- Cognito user pool — `authorizers[*].provider_arns` (from `terraform-aws-cognito`) for `COGNITO_USER_POOLS` authorizers
+- WAFv2 web ACL — associated to a stage by ARN, managed in `terraform-aws-wafv2` (this module only surfaces `stage_web_acl_arns` for drift visibility)
+- VPC endpoint(s) — `endpoint_configuration.vpc_endpoint_ids` / `domain_name_access_associations[*].access_association_source` (from `terraform-aws-vpc-endpoint`)
+- CloudWatch Logs log group — `stages[*].access_log_destination_arn` (from `terraform-aws-cloudwatch-log-group`)
+- IAM role(s) — `authorizers[*].authorizer_credentials`, `integrations[*].credentials`, `account_cloudwatch_role_arn` (from `terraform-aws-iam-role`)
+- Route 53 records for a custom domain name — created in `terraform-aws-route53-zone` against this module's `domain_name_regional_domain_names` / `domain_name_cloudfront_domain_names` outputs
 
 ## Consumes
 
 | Input | Type | Source module |
 |---|---|---|
-| `endpoint_configuration.vpc_endpoint_ids` | `list(string)` | `tf-mod-aws-vpc-endpoint` |
-| `authorizers[*].authorizer_uri` | `string` (Lambda invoke ARN) | `tf-mod-aws-lambda` |
-| `authorizers[*].authorizer_credentials` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
-| `authorizers[*].provider_arns` | `list(string)` (Cognito user pool ARNs) | `tf-mod-aws-cognito` |
-| `integrations[*].uri` | `string` (Lambda invoke ARN / HTTP(S) URL / AWS service URI) | `tf-mod-aws-lambda` / external |
-| `integrations[*].credentials` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
-| `vpc_links[*].target_arns` | `list(string)` (NLB ARN) | `tf-mod-aws-lb` |
-| `domain_names[*].certificate_arn` | `string` (ACM cert ARN, us-east-1 for EDGE) | `tf-mod-aws-acm` |
-| `domain_names[*].regional_certificate_arn` | `string` (ACM cert ARN, same Region) | `tf-mod-aws-acm` |
-| `domain_name_access_associations[*].access_association_source` | `string` (VPC endpoint id) | `tf-mod-aws-vpc-endpoint` |
-| `stages[*].access_log_destination_arn` | `string` (CloudWatch log group ARN) | `tf-mod-aws-cloudwatch-log-group` |
-| `account_cloudwatch_role_arn` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
+| `endpoint_configuration.vpc_endpoint_ids` | `list(string)` | `terraform-aws-vpc-endpoint` |
+| `authorizers[*].authorizer_uri` | `string` (Lambda invoke ARN) | `terraform-aws-lambda` |
+| `authorizers[*].authorizer_credentials` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
+| `authorizers[*].provider_arns` | `list(string)` (Cognito user pool ARNs) | `terraform-aws-cognito` |
+| `integrations[*].uri` | `string` (Lambda invoke ARN / HTTP(S) URL / AWS service URI) | `terraform-aws-lambda` / external |
+| `integrations[*].credentials` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
+| `vpc_links[*].target_arns` | `list(string)` (NLB ARN) | `terraform-aws-lb` |
+| `domain_names[*].certificate_arn` | `string` (ACM cert ARN, us-east-1 for EDGE) | `terraform-aws-acm` |
+| `domain_names[*].regional_certificate_arn` | `string` (ACM cert ARN, same Region) | `terraform-aws-acm` |
+| `domain_name_access_associations[*].access_association_source` | `string` (VPC endpoint id) | `terraform-aws-vpc-endpoint` |
+| `stages[*].access_log_destination_arn` | `string` (CloudWatch log group ARN) | `terraform-aws-cloudwatch-log-group` |
+| `account_cloudwatch_role_arn` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
 
 ## Required IAM permissions
 
@@ -102,7 +102,7 @@ Least-privilege actions the Terraform identity needs:
 | `apigateway:POST` on `/vpclinks*` | VPC Link lifecycle |
 | `apigateway:PATCH` on `/account` | Account settings (only when `manage_account_settings = true`) |
 | `iam:PassRole` on the authorizer / integration / account CloudWatch role ARNs | Passing an IAM role to API Gateway for Lambda authorizer invocation, AWS-service integrations, or account-level CloudWatch logging |
-| `lambda:GetFunction`, `lambda:AddPermission` | Confirming and authorizing Lambda invocation by API Gateway for `AWS_PROXY` integrations and Lambda authorizers (a companion `aws_lambda_permission` is created by the caller / `tf-mod-aws-lambda`, not this module) |
+| `lambda:GetFunction`, `lambda:AddPermission` | Confirming and authorizing Lambda invocation by API Gateway for `AWS_PROXY` integrations and Lambda authorizers (a companion `aws_lambda_permission` is created by the caller / `terraform-aws-lambda`, not this module) |
 | `acm:DescribeCertificate` | Resolving domain name certificates |
 | `ec2:DescribeVpcEndpoints` | Resolving PRIVATE endpoint VPC endpoint IDs |
 | `elasticloadbalancing:DescribeLoadBalancers` | Resolving VPC Link target NLB ARNs |
@@ -128,7 +128,7 @@ Least-privilege actions the Terraform identity needs:
   the certificate in the **same Region** as this module. This is the one
   us-east-1 touchpoint in this module family — document clearly per domain.
 - **PRIVATE APIs** require at least one interface VPC endpoint for
-  `com.amazonaws.<region>.execute-api` (from `tf-mod-aws-vpc-endpoint`) AND a
+  `com.amazonaws.<region>.execute-api` (from `terraform-aws-vpc-endpoint`) AND a
   resource policy (`var.policy`) scoping `execute-api:Invoke` to that VPC
   endpoint — a PRIVATE API with no policy is unreachable by design (safe
   failure mode) but also useless; both must be wired together.
@@ -147,15 +147,15 @@ Least-privilege actions the Terraform identity needs:
 | `arn` | REST API ARN — cross-resource reference type | IAM policies, audit |
 | `name` | REST API name | tagging, audit |
 | `root_resource_id` | Root ("/") resource id | external `aws_api_gateway_resource` additions |
-| `execution_arn` | `execute-api` ARN base | `aws_lambda_permission.source_arn` (`tf-mod-aws-lambda`) |
+| `execution_arn` | `execute-api` ARN base | `aws_lambda_permission.source_arn` (`terraform-aws-lambda`) |
 | `resource_ids` / `resource_paths` | Map of resources key → id / full path | audit, external method wiring |
 | `method_ids` | Map of methods key → `"<resource_id>/<http_method>"` | audit |
 | `authorizer_ids` / `model_ids` / `request_validator_ids` | Maps of key → id | audit, external references |
 | `deployment_id` | The module's single deployment id | audit |
-| `stage_ids` / `stage_arns` / `stage_invoke_urls` / `stage_execution_arns` | Maps of stages key → id/ARN/invoke URL/execution ARN | `tf-mod-aws-lambda` (per-stage permission), app config, monitoring |
-| `stage_web_acl_arns` | Map of stages key → associated WAFv2 web ACL ARN (null until associated) | `tf-mod-aws-wafv2` drift visibility |
+| `stage_ids` / `stage_arns` / `stage_invoke_urls` / `stage_execution_arns` | Maps of stages key → id/ARN/invoke URL/execution ARN | `terraform-aws-lambda` (per-stage permission), app config, monitoring |
+| `stage_web_acl_arns` | Map of stages key → associated WAFv2 web ACL ARN (null until associated) | `terraform-aws-wafv2` drift visibility |
 | `domain_name_ids` / `domain_name_arns` | Maps of domain_names key → id/ARN | audit |
-| `domain_name_cloudfront_domain_names` / `domain_name_regional_domain_names` / `domain_name_regional_zone_ids` | Alias targets for a Route 53 record | `tf-mod-aws-route53-zone` |
+| `domain_name_cloudfront_domain_names` / `domain_name_regional_domain_names` / `domain_name_regional_zone_ids` | Alias targets for a Route 53 record | `terraform-aws-route53-zone` |
 | `usage_plan_ids` / `usage_plan_arns` | Maps of usage_plans key → id/ARN | billing/SaaS integrations |
 | `api_key_ids` / `api_key_arns` | Maps of api_keys key → id/ARN | audit |
 | `api_key_values` | Map of api_keys key → key value. **SENSITIVE.** | caller distribution (out of band, never logged) |
@@ -221,7 +221,7 @@ Least-privilege actions the Terraform identity needs:
 - One composite owns the full V1 REST API surface — resource tree, methods,
   integrations, auth, models, deployment, stages, domains, usage plans, VPC
   Links, and documentation — so a caller gets a complete, deployable REST API
-  from a single module call, mirroring the `tf-mod-aws-lb` design philosophy
+  from a single module call, mirroring the `terraform-aws-lb` design philosophy
   applied to a much deeper, self-referential resource tree.
 - Every child collection is `for_each` over `map(object(...))` keyed by a
   stable caller string — no `count` anywhere, including the two conditional
@@ -241,6 +241,6 @@ Least-privilege actions the Terraform identity needs:
 - The OpenAPI/Swagger `body`-import authoring style
   (`aws_api_gateway_rest_api_put`, the `body` argument) is deliberately
   excluded — see "Out-of-scope resources" above.
-- WAFv2 web ACL association happens in `tf-mod-aws-wafv2` (by stage ARN), and
-  Lambda permissions in `tf-mod-aws-lambda` (by `execution_arn`), keeping this
+- WAFv2 web ACL association happens in `terraform-aws-wafv2` (by stage ARN), and
+  Lambda permissions in `terraform-aws-lambda` (by `execution_arn`), keeping this
   module's blast radius to the API Gateway objects themselves.

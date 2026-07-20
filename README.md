@@ -20,7 +20,7 @@
 - 🌲 **Self-referential resource tree.** `resources[*].parent_key` can reference any other key in the same map — Terraform resolves the full path hierarchy from a flat, caller-supplied map with no manual ordering.
 - 🔁 **Hash-triggered redeployment.** The module's single `aws_api_gateway_deployment` automatically redeploys whenever the resource/method/integration/authorizer/model/gateway-response maps change shape, via a `sha1`-hashed `triggers` map plus explicit `depends_on` (per the provider's own guidance) — with `create_before_destroy` always on, so recreation never collides with an active stage.
 - 🔑 **Metering built in.** Usage plans, API keys, and usage-plan-key associations are first-class `map(object(...))` inputs, keyed and cross-referenced automatically.
-- 🕸️ **Private integrations supported.** `aws_api_gateway_vpc_link` bridges to an internal NLB (`tf-mod-aws-lb`) for `HTTP`/`HTTP_PROXY` integrations without exposing the backend publicly.
+- 🕸️ **Private integrations supported.** `aws_api_gateway_vpc_link` bridges to an internal NLB (`terraform-aws-lb`) for `HTTP`/`HTTP_PROXY` integrations without exposing the backend publicly.
 - 🚧 **One authoring style, on purpose.** This module manages the API exclusively via the native Terraform resource graph — it does **not** expose the OpenAPI-body import path (`aws_api_gateway_rest_api_put` / the `body` argument), because the provider's own docs warn that mixing the two silently overwrites Terraform-managed child resources.
 - 🏷️ **Tags everywhere taggable.** `var.tags` merges with provider `default_tags` and flows to the REST API, API keys, client certificates, domain names, usage plans, VPC Links, and stages; `tags_all` is surfaced on the REST API.
 
@@ -42,20 +42,20 @@ Whether it's a star, a professional connection, or a coffee, every gesture helps
 
 ## 🗺️ Where this fits in the family
 
-`tf-mod-aws-api-gateway` is the **V1 REST API** counterpart to `tf-mod-aws-api-gateway-v2` (HTTP/WebSocket) — it consumes identity, backend, certificate, and networking inputs from upstream siblings, and is itself consumed by DNS and WAF modules downstream.
+`terraform-aws-api-gateway` is the **V1 REST API** counterpart to `terraform-aws-api-gateway-v2` (HTTP/WebSocket) — it consumes identity, backend, certificate, and networking inputs from upstream siblings, and is itself consumed by DNS and WAF modules downstream.
 
 ```mermaid
 flowchart LR
- IAM[tf-mod-aws-iam-role] --> APIGW
- LAMBDA[tf-mod-aws-lambda] --> APIGW
- COGNITO[tf-mod-aws-cognito] --> APIGW
- ACM[tf-mod-aws-acm] --> APIGW
- VPCE[tf-mod-aws-vpc-endpoint] --> APIGW
- LB[tf-mod-aws-lb NLB] --> APIGW
- CWLG[tf-mod-aws-cloudwatch-log-group] --> APIGW
- WAFV2[tf-mod-aws-wafv2] -. associates stage.-> APIGW
- APIGW[tf-mod-aws-api-gateway REST v1] --> ROUTE53[tf-mod-aws-route53-zone]
- APIGWV2[tf-mod-aws-api-gateway-v2 HTTP or WebSocket] -. sibling module.- APIGW
+ IAM[terraform-aws-iam-role] --> APIGW
+ LAMBDA[terraform-aws-lambda] --> APIGW
+ COGNITO[terraform-aws-cognito] --> APIGW
+ ACM[terraform-aws-acm] --> APIGW
+ VPCE[terraform-aws-vpc-endpoint] --> APIGW
+ LB[terraform-aws-lb NLB] --> APIGW
+ CWLG[terraform-aws-cloudwatch-log-group] --> APIGW
+ WAFV2[terraform-aws-wafv2] -. associates stage.-> APIGW
+ APIGW[terraform-aws-api-gateway REST v1] --> ROUTE53[terraform-aws-route53-zone]
+ APIGWV2[terraform-aws-api-gateway-v2 HTTP or WebSocket] -. sibling module.- APIGW
 
  style APIGW fill:#FF9900,color:#fff
 ```
@@ -154,7 +154,7 @@ Least-privilege actions the **Terraform execution identity** needs to manage thi
 | `apigateway:POST` on `/vpclinks*` | VPC Link lifecycle | |
 | `apigateway:PATCH` on `/account` | Account settings | Only when `manage_account_settings = true` |
 | `iam:PassRole` on authorizer / integration / account CloudWatch role ARNs | Passing an IAM role to API Gateway | For Lambda authorizer invocation, AWS-service integrations, or account-level CloudWatch logging |
-| `lambda:GetFunction`, `lambda:AddPermission` | Confirming/authorizing Lambda invocation | The companion `aws_lambda_permission` is created by the caller / `tf-mod-aws-lambda`, not this module |
+| `lambda:GetFunction`, `lambda:AddPermission` | Confirming/authorizing Lambda invocation | The companion `aws_lambda_permission` is created by the caller / `terraform-aws-lambda`, not this module |
 | `acm:DescribeCertificate` | Resolving domain name certificates | |
 | `ec2:DescribeVpcEndpoints` | Resolving PRIVATE endpoint VPC endpoint IDs | |
 | `elasticloadbalancing:DescribeLoadBalancers` | Resolving VPC Link target NLB ARNs | |
@@ -167,7 +167,7 @@ Least-privilege actions the **Terraform execution identity** needs to manage thi
 
 - **Account-level CloudWatch role is a Region-wide singleton.** `aws_api_gateway_account` applies to the whole account + Region, not this REST API. Set `manage_account_settings = true` in **exactly one** module call per account/Region.
 - **Custom domain certificates:** EDGE domains need an ACM cert in **us-east-1**; REGIONAL/PRIVATE domains need one in **this module's own Region**.
-- **PRIVATE APIs** need at least one `com.amazonaws.<region>.execute-api` interface VPC endpoint (`tf-mod-aws-vpc-endpoint`) **and** a resource policy (`var.policy`) scoping `execute-api:Invoke` to it — without both, the API is unreachable (safe failure) but non-functional.
+- **PRIVATE APIs** need at least one `com.amazonaws.<region>.execute-api` interface VPC endpoint (`terraform-aws-vpc-endpoint`) **and** a resource policy (`var.policy`) scoping `execute-api:Invoke` to it — without both, the API is unreachable (safe failure) but non-functional.
 - **Usage plans require their referenced stages to already exist** — handled automatically by this module's internal resource references.
 - **Quotas:** 600 REST APIs/account/Region (default); 300 resources/API; 10 authorizers/API; 60 req/s account-level throttle (soft); 500 usage plans/account — most raisable via Service Quotas.
 
@@ -176,7 +176,7 @@ Least-privilege actions the **Terraform execution identity** needs to manage thi
 ## 📁 Module Structure
 
 ```
-tf-mod-aws-api-gateway/
+terraform-aws-api-gateway/
 ├── providers.tf
 ├── variables.tf
 ├── main.tf
@@ -191,7 +191,7 @@ tf-mod-aws-api-gateway/
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name        = "core-orders-api"
   description = "Orders REST API"
@@ -213,14 +213,14 @@ module "rest_api" {
       method_key              = "list_orders"
       type                    = "AWS_PROXY"
       integration_http_method = "POST"
-      uri                     = module.orders_lambda.invoke_arn # tf-mod-aws-lambda
+      uri                     = module.orders_lambda.invoke_arn # terraform-aws-lambda
     }
   }
 
   stages = {
     prod = {
       stage_name                 = "prod"
-      access_log_destination_arn = module.apigw_logs.arn # tf-mod-aws-cloudwatch-log-group
+      access_log_destination_arn = module.apigw_logs.arn # terraform-aws-cloudwatch-log-group
       access_log_format          = jsonencode({ requestId = "$context.requestId", ip = "$context.identity.sourceIp", status = "$context.status" })
     }
   }
@@ -240,21 +240,21 @@ module "rest_api" {
 
 | Input | Type | Source module |
 |---|---|---|
-| `endpoint_configuration.vpc_endpoint_ids` | `list(string)` | `tf-mod-aws-vpc-endpoint` |
-| `authorizers[*].authorizer_uri` | `string` (Lambda invoke ARN) | `tf-mod-aws-lambda` |
-| `authorizers[*].authorizer_credentials` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
-| `authorizers[*].provider_arns` | `list(string)` (Cognito user pool ARNs) | `tf-mod-aws-cognito` |
-| `integrations[*].uri` | `string` (Lambda invoke ARN / URL / AWS URI) | `tf-mod-aws-lambda` / external |
-| `integrations[*].credentials` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
-| `vpc_links[*].target_arns` | `list(string)` (NLB ARN) | `tf-mod-aws-lb` |
-| `domain_names[*].certificate_arn` / `.regional_certificate_arn` | `string` (ACM cert ARN) | `tf-mod-aws-acm` |
-| `domain_name_access_associations[*].access_association_source` | `string` (VPC endpoint id) | `tf-mod-aws-vpc-endpoint` |
-| `stages[*].access_log_destination_arn` | `string` (log group ARN) | `tf-mod-aws-cloudwatch-log-group` |
-| `account_cloudwatch_role_arn` | `string` (IAM role ARN) | `tf-mod-aws-iam-role` |
+| `endpoint_configuration.vpc_endpoint_ids` | `list(string)` | `terraform-aws-vpc-endpoint` |
+| `authorizers[*].authorizer_uri` | `string` (Lambda invoke ARN) | `terraform-aws-lambda` |
+| `authorizers[*].authorizer_credentials` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
+| `authorizers[*].provider_arns` | `list(string)` (Cognito user pool ARNs) | `terraform-aws-cognito` |
+| `integrations[*].uri` | `string` (Lambda invoke ARN / URL / AWS URI) | `terraform-aws-lambda` / external |
+| `integrations[*].credentials` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
+| `vpc_links[*].target_arns` | `list(string)` (NLB ARN) | `terraform-aws-lb` |
+| `domain_names[*].certificate_arn` / `.regional_certificate_arn` | `string` (ACM cert ARN) | `terraform-aws-acm` |
+| `domain_name_access_associations[*].access_association_source` | `string` (VPC endpoint id) | `terraform-aws-vpc-endpoint` |
+| `stages[*].access_log_destination_arn` | `string` (log group ARN) | `terraform-aws-cloudwatch-log-group` |
+| `account_cloudwatch_role_arn` | `string` (IAM role ARN) | `terraform-aws-iam-role` |
 
 ### Emits
 
-See the SCOPE.md `## Emits` table for the complete list — primary outputs `id` and `arn`, plus `execution_arn` (consumed by `tf-mod-aws-lambda` permissions), `stage_invoke_urls`, `domain_name_regional_domain_names` / `domain_name_cloudfront_domain_names` (consumed by `tf-mod-aws-route53-zone`), and `api_key_values` (sensitive).
+See the SCOPE.md `## Emits` table for the complete list — primary outputs `id` and `arn`, plus `execution_arn` (consumed by `terraform-aws-lambda` permissions), `stage_invoke_urls`, `domain_name_regional_domain_names` / `domain_name_cloudfront_domain_names` (consumed by `terraform-aws-route53-zone`), and `api_key_values` (sensitive).
 
 ---
 
@@ -265,7 +265,7 @@ See the SCOPE.md `## Emits` table for the complete list — primary outputs `id`
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "hello-api"
 
@@ -302,7 +302,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "orders-api"
 
@@ -351,7 +351,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "member-portal-api"
 
@@ -363,7 +363,7 @@ module "rest_api" {
     cognito = {
       name          = "cognito-authorizer"
       type          = "COGNITO_USER_POOLS"
-      provider_arns = [module.member_pool.arn] # tf-mod-aws-cognito
+      provider_arns = [module.member_pool.arn] # terraform-aws-cognito
     }
   }
 
@@ -395,7 +395,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "partner-data-api"
 
@@ -457,13 +457,13 @@ data "aws_iam_policy_document" "private_api" {
  condition {
  test = "StringEquals"
  variable = "aws:SourceVpce"
- values = [module.execute_api_endpoint.id] # tf-mod-aws-vpc-endpoint
+ values = [module.execute_api_endpoint.id] # terraform-aws-vpc-endpoint
  }
  }
 }
 
 module "rest_api" {
- source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+ source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
  name = "internal-only-api"
 
@@ -503,7 +503,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "public-api"
 
@@ -513,7 +513,7 @@ module "rest_api" {
   domain_names = {
     api = {
       domain_name              = "api.example.com"
-      regional_certificate_arn = module.api_cert.arn # tf-mod-aws-acm (regional, same Region)
+      regional_certificate_arn = module.api_cert.arn # terraform-aws-acm (regional, same Region)
       security_policy          = "TLS_1_2"
       endpoint_configuration   = { types = ["REGIONAL"] }
     }
@@ -525,7 +525,7 @@ module "rest_api" {
 }
 
 resource "aws_route53_record" "api" {
-  zone_id = module.public_zone.zone_id # tf-mod-aws-route53-zone
+  zone_id = module.public_zone.zone_id # terraform-aws-route53-zone
   name    = "api.example.com"
   type    = "A"
 
@@ -543,14 +543,14 @@ resource "aws_route53_record" "api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "internal-service-api"
 
   vpc_links = {
     internal_nlb = {
       name        = "internal-nlb-link"
-      target_arns = [module.internal_nlb.arn] # tf-mod-aws-lb, load_balancer_type = "network"
+      target_arns = [module.internal_nlb.arn] # terraform-aws-lb, load_balancer_type = "network"
     }
   }
 
@@ -585,7 +585,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "validated-api"
 
@@ -637,7 +637,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "branded-errors-api"
   #... resources / methods / integrations / stages omitted for brevity...
@@ -677,7 +677,7 @@ provider "aws" {
 }
 
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "tagged-api"
   #... resources / methods / integrations / stages omitted for brevity...
@@ -698,7 +698,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "public-edge-api" # documented exception: public-facing marketing API, no PII
 
@@ -744,7 +744,7 @@ locals {
 }
 
 module "rest_api" {
-  source   = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source   = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
   for_each = toset(local.environments)
 
   name = "orders-api-${each.key}"
@@ -780,7 +780,7 @@ module "rest_api" {
 
 ```hcl
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "documented-api"
   #... resources / methods / integrations / stages omitted for brevity...
@@ -810,7 +810,7 @@ import {
 }
 
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name = "existing-api" # must match the imported name
   #... reconstruct resources / methods / integrations / stages to match the
@@ -825,29 +825,29 @@ module "rest_api" {
 
 ```hcl
 module "orders_lambda" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-lambda?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-lambda?ref=v1.0.0"
   function_name = "orders-api-handler"
   #...
 }
 
 module "member_pool" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-cognito?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-cognito?ref=v1.0.0"
   #...
 }
 
 module "api_cert" {
-  source      = "git::https://github.com/microsoftexpert/tf-mod-aws-acm?ref=v1.0.0"
+  source      = "git::https://github.com/microsoftexpert/terraform-aws-acm?ref=v1.0.0"
   domain_name = "api.example.com"
   # regional cert, same Region as the module below
 }
 
 module "apigw_logs" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-cloudwatch-log-group?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-cloudwatch-log-group?ref=v1.0.0"
   name   = "/aws/apigateway/orders-api"
 }
 
 module "rest_api" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 
   name        = "orders-api"
   description = "Orders REST API -- production"
@@ -1013,7 +1013,7 @@ See `variables.tf` for the full deeply-typed schema of every map — each carrie
 ## 🚀 Runbook
 
 ```powershell
-cd tf-mod-aws-api-gateway
+cd terraform-aws-api-gateway
 terraform init -backend=false
 terraform validate
 terraform fmt -check
@@ -1062,7 +1062,7 @@ stage_invoke_urls = {
 - **Redeployment doesn't pick up a change you expect** — the automatic `deployment_hash` only covers `resources`/`methods`/`integrations`/`integration_responses`/`method_responses`/`authorizers`/`models`/`request_validators`/`gateway_responses`. If you changed something outside those maps (e.g. an external file consumed indirectly), fold a hash of it into `deployment_trigger_resources`.
 - **Tag drift from `default_tags` overlap** — don't set the same tag key in both the provider's `default_tags` and this module's `tags`; resource tags win, and duplicating the key just hides which value is actually in effect. Check `tags_all` for the merged result.
 - **Credential-chain failures on `plan`/`apply`** — confirm `AWS_PROFILE` / SSO session / OIDC role is active and the Region is set at the provider level; this module has no credential or region variables of its own.
-- **EDGE custom domain "certificate must be in us-east-1"** — `domain_names[*].certificate_arn` (EDGE) must come from a `tf-mod-aws-acm` call using `providers = { aws = aws.us_east_1 }`; `regional_certificate_arn` (REGIONAL/PRIVATE) must come from a call in this module's own Region. Mixing them up is the most common domain-name apply failure.
+- **EDGE custom domain "certificate must be in us-east-1"** — `domain_names[*].certificate_arn` (EDGE) must come from a `terraform-aws-acm` call using `providers = { aws = aws.us_east_1 }`; `regional_certificate_arn` (REGIONAL/PRIVATE) must come from a call in this module's own Region. Mixing them up is the most common domain-name apply failure.
 - **IAM permission denials on `apply`** — API Gateway's IAM namespace is HTTP-verb-based (`apigateway:POST`/`PATCH`/etc.) scoped to resource-path ARNs, not per-resource-type actions; check the SCOPE.md `## Required IAM permissions` table and widen the resource-path pattern, not the verb list.
 - **PRIVATE API returns "Forbidden" for all callers** — the resource policy (`var.policy`) is missing or doesn't scope `execute-api:Invoke` to the VPC endpoint(s) in `endpoint_configuration.vpc_endpoint_ids`; both must be wired together.
 - **Usage plan apply fails referencing a stage** — the stage must exist before the usage plan's `api_stages` block references it; this module orders it automatically via resource references, but if you see this externally, check for out-of-band stage deletion.
@@ -1076,8 +1076,8 @@ stage_invoke_urls = {
 - Terraform Registry: `hashicorp/aws` provider — API Gateway resource family (`aws_api_gateway_rest_api` and siblings)
 - AWS API Gateway Developer Guide — REST API concepts, custom domain names, usage plans, private APIs
 - AWS API Gateway Developer Guide — CloudWatch logging and X-Ray tracing setup
-- `tf-mod-aws-api-gateway-v2` — the HTTP/WebSocket (V2) sibling module
-- `tf-mod-aws-lambda`, `tf-mod-aws-cognito`, `tf-mod-aws-acm`, `tf-mod-aws-lb`, `tf-mod-aws-vpc-endpoint`, `tf-mod-aws-wafv2`, `tf-mod-aws-route53-zone` — upstream/downstream sibling modules
+- `terraform-aws-api-gateway-v2` — the HTTP/WebSocket (V2) sibling module
+- `terraform-aws-lambda`, `terraform-aws-cognito`, `terraform-aws-acm`, `terraform-aws-lb`, `terraform-aws-vpc-endpoint`, `terraform-aws-wafv2`, `terraform-aws-route53-zone` — upstream/downstream sibling modules
 
 ---
 

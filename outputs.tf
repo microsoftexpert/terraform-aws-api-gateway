@@ -11,7 +11,7 @@ output "arn" {
  description = <<EOT
 ARN of the REST API (cross-resource reference type:
 arn:aws:apigateway:<region>::/restapis/<rest_api_id>). Consumed by IAM
-policies scoping apigateway:* actions and by tf-mod-aws-wafv2 style
+policies scoping apigateway:* actions and by terraform-aws-wafv2 style
 association patterns that key off REST API ARNs.
 EOT
  value = aws_api_gateway_rest_api.this.arn
@@ -33,7 +33,7 @@ Execution ARN part (arn:aws:execute-api:<region>:<account>:<rest_api_id>),
 used as the source_arn base in aws_lambda_permission when allowing this API
 to invoke a backend Lambda -- concatenate with "/<stage>/<method><path>" (or
 "/*/*/*" for a broad grant scoped to this API). Consumed by
-tf-mod-aws-lambda callers wiring AWS_PROXY integrations.
+terraform-aws-lambda callers wiring AWS_PROXY integrations.
 EOT
  value = aws_api_gateway_rest_api.this.execution_arn
 }
@@ -106,7 +106,7 @@ output "stage_execution_arns" {
 }
 
 output "stage_web_acl_arns" {
- description = "Map of stages key => associated WAFv2 web ACL ARN (null until a web ACL is associated, e.g. via tf-mod-aws-wafv2)."
+ description = "Map of stages key => associated WAFv2 web ACL ARN (null until a web ACL is associated, e.g. via terraform-aws-wafv2)."
  value = { for k, s in aws_api_gateway_stage.this: k => try(s.web_acl_arn, null) }
 }
 

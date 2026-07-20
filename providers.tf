@@ -19,8 +19,8 @@ terraform {
 # decides the Region by choosing which provider configuration to pass into the
 # `aws` slot.
 #
-# Unlike tf-mod-aws-cloudfront / tf-mod-aws-wafv2 (CLOUDFRONT scope) / the
-# CloudFront-facing tf-mod-aws-acm call, API Gateway V1 REST APIs are a
+# Unlike terraform-aws-cloudfront / terraform-aws-wafv2 (CLOUDFRONT scope) / the
+# CloudFront-facing terraform-aws-acm call, API Gateway V1 REST APIs are a
 # REGIONAL or EDGE-optimized service managed from the Region the API lives in
 # -- there is NO us-east-1 requirement for this module itself. The only
 # us-east-1 coupling that can appear here is indirect: an EDGE-optimized
@@ -28,11 +28,11 @@ terraform {
 # aws_api_gateway_domain_name) MUST be requested in us-east-1 (API Gateway
 # EDGE domains sit behind an AWS-managed CloudFront distribution), while a
 # REGIONAL custom domain's certificate (regional_certificate_arn) must be in
-# the SAME Region as the API. Wire the correct tf-mod-aws-acm call for the
+# the SAME Region as the API. Wire the correct terraform-aws-acm call for the
 # endpoint type you choose.
 #
 # module "rest_api" {
-# source = "git::https://github.com/microsoftexpert/tf-mod-aws-api-gateway?ref=v1.0.0"
+# source = "git::https://github.com/microsoftexpert/terraform-aws-api-gateway?ref=v1.0.0"
 # # inherits the default `aws` provider (whatever Region it points at)
 # name = "core-rest-api"
 #...
